@@ -28,38 +28,52 @@
         }))
     }
 
+    const downloadVideo = async () => {
+        log('Finding video wrapper...')
+        const videoWrapper = find(`.w-video-wrapper`)
+        log('videoWrapper found', videoWrapper)
+        rclick(videoWrapper)
+        
+        log('Waiting for context menu...')
+        await pause(3000)
+
+        log('Finding copy link...')
+        let copyLinkButton
+        copyLinkButton = find(`.w-context-menu button[islastitem]`, true)
+        log('copyLinkButton found', copyLinkButton)
+
+        log('Clicking copy link...')
+        copyLinkButton.click()
+        log('Context menu shown')
+
+        log("Copying clipboard contents...")
+        await pause(3000)
+        const url = await navigator.clipboard.readText()
+        log(`Copy link clicked. Clipboard contains url "${url}"`)
+
+        log("Extracting Wisitia video id from copied url...")
+        const wvideo = url.split('wvideo=')[1].split('"')[0].trim()
+        const wurl = `https://fast.wistia.net/embed/iframe/${wvideo}`
+        log("Wisitia video url is ", wurl)
+        
+        log("Opening embedded video from Wistia...")
+        container.innerHTML += `<h3><a href="${wurl}" target="_blank">${wurl}</a></h3>`
+        window.open(wurl, '_blank')
+        log("WORip complete")
+    }
+
     log('Waiting for page to load...')
     await pause(3000)
     log('Page loaded!')
 
-    log('Finding video wrapper...')
-    const videoWrapper = find(`.w-video-wrapper`)
-    log('videoWrapper found', videoWrapper)
-    rclick(videoWrapper)
-    
-    log('Waiting for context menu...')
-    await pause(3000)
-    let copyLinkButton
-    copyLinkButton = find(`.w-context-menu button[islastitem]`, false)
-    log('Context menu shown')
-
-    log('Finding copy link...')
-    log('copyLinkButton found', copyLinkButton)
-
-    // Must focus the body first 
-    // we wouldn't want any scripts reading our clipboard...oh wait?
-    log("Focusing document...")
-    chrome.openDevTools(false)
-
-    log('Clicking copy link...')
-    copyLinkButton.focus()
-    copyLinkButton.click()
-
-    log("Copying clipboard contents...")
-    await pause(3000)
-    const url = await navigator.clipboard.readText()
-    log(`Copy link clicked. Clipboard contains url "${url}"`)
-    chrome.openDevTools()
-
+    log("Injecting download button into DOM...")
+    const downloadButton = document.createElement('button')
+    downloadButton.innerText = "Download Video"
+    downloadButton.classList.add("button")
+    downloadButton.classList.add("is-transparent")
+    downloadButton.style.background = "limeGreen"
+    downloadButton.style.color = "#fff"
+    downloadButton.addEventListener('click', downloadVideo)
+    const container = document.querySelector('.header-container')
+    setTimeout(() => container.appendChild(downloadButton), 1000)
 })()
-
